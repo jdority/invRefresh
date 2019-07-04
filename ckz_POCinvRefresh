@@ -2,6 +2,10 @@
 // Example REST call out to external inventory system.    List is used to compare against B2B Commerce 
 // which will be updated to reflect current inventory.
 // 
+//https://cloudcraze.atlassian.net/wiki/spaces/CCRZDOCS49S/pages/392168318/Standalone+Product#StandaloneProduct-ProductInventoryItemsSection
+//https://cloudcraze.atlassian.net/wiki/spaces/CCRZDOCS49S/pages/393905138/ccrz+E+ProductInventoryItem+c
+//https://cloudcraze.atlassian.net/wiki/spaces/CCRZDOCS48/pages/379717300/ccrz.ccApiProduct
+//
 global with sharing class ckz_POCinvRefresh {
     
     private static String updateFromExtInv() {
