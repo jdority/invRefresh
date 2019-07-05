@@ -89,5 +89,11 @@ global with sharing class ckz_POCinvRefresh {
         }
         
         return null;
+<<<<<<< HEAD:ckz_POCinvRefresh.cls
     } 
 }
+=======
+    }
+    
+}
+>>>>>>> 56da92c1b8d2be86718d2d57193dd4e2044416ed:ckz_POCinvRefresh.cls
