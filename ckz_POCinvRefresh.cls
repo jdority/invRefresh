@@ -1,11 +1,7 @@
-// J. Dority  7-3-19
+/// J. Dority  7-3-19
 // Example REST call out to external inventory system.    List is used to compare against B2B Commerce 
 // which will be updated to reflect current inventory.
 // 
-//https://cloudcraze.atlassian.net/wiki/spaces/CCRZDOCS49S/pages/392168318/Standalone+Product#StandaloneProduct-ProductInventoryItemsSection
-//https://cloudcraze.atlassian.net/wiki/spaces/CCRZDOCS49S/pages/393905138/ccrz+E+ProductInventoryItem+c
-//https://cloudcraze.atlassian.net/wiki/spaces/CCRZDOCS48/pages/379717300/ccrz.ccApiProduct
-//
 global with sharing class ckz_POCinvRefresh {
     
     private static String updateFromExtInv() {
@@ -38,9 +34,10 @@ global with sharing class ckz_POCinvRefresh {
         
         List<Object> valueList = (List<Object>)MyMap.get('value');
         
+        
         integer i = 0;
         integer cnt = valueList.size();
-        if(valueList != null && cnt > 0) {
+        if(!valueList.isEmpty()) {
             //loop through external inventory list and apply changes to B2B Commerce
             for (i = 0; i < cnt; i++ )   {
                 Object obj = valueList.get(i);
@@ -52,31 +49,45 @@ global with sharing class ckz_POCinvRefresh {
                 Status = (String)objMap.get('ccrz__status__c'); 
                 ProductItem = (String)objMap.get('ccrz__productitem__c');
                 
-                // Fetch B2B Commerce Product Inventory record and compare to external system.
+                // Fetch B2B Commerce Product Inventory record
                 // product inventory object does not appear to have a primary key, so combining name and productitem
                 List<ccrz__e_productinventoryitem__c> prodInvList = 
                     [SELECT id, name, ccrz__ProductItem__c, ccrz__QtyAvailable__c, ccrz__Status__c 
                      FROM ccrz__e_productinventoryitem__c
                      WHERE ccrz__ProductItem__c = :ProductItem];
-                
+                     
                 List<ccrz__e_productinventoryitem__c> prodInvUpd = new List<ccrz__e_productinventoryitem__c>();
                 
-                if (prodInvList[0].ccrz__QtyAvailable__c != QtyAvailable &&
-                    prodInvList[0].ccrz__ProductItem__c == ProductItem &&
-                    prodInvList[0].name == Name) {
-                        
-                        prodInvList[0].ccrz__QtyAvailable__c = QtyAvailable;
-                        prodInvUpd.add(prodInvList[0]);
-                        
-                        // update Product Inventory
-                        update prodInvUpd;
-                        ccrz.ccLog.log('ckz_POCOProdInvCtl', 'Updated: ' + QtyAvailable);
-                    }
-                
+                // If not found in B2B Commerce, insert new inventory record - ProductItem ID is stored in external system
+                if(prodInvList.isEmpty()) {   
+                    
+                    prodInvUpd.add(new ccrz__e_productinventoryitem__c(
+                        Id = null,
+                        Name = Name,
+                        ccrz__ProductItem__c = ProductItem,
+                        ccrz__Status__c = Status,
+                        ccrz__QtyAvailable__c = QtyAvailable));
+
+                    insert prodInvUpd; 
+                    system.debug('Insert new inventory item-->' + prodInvUpd[0].ccrz__ProductItem__c);
+                    ccrz.ccLog.log('ckz_POCOProdInvCtl', 'Insert: ' + ProductItem);}
+                else
+                {
+                    if (prodInvList[0].ccrz__QtyAvailable__c != QtyAvailable ||
+                        prodInvList[0].ccrz__Status__c != Status) {
+                            
+                            prodInvList[0].ccrz__QtyAvailable__c = QtyAvailable;
+                            prodInvList[0].ccrz__Status__c = Status;
+                            prodInvUpd.add(prodInvList[0]);
+                            
+                            // If Qty or Status are diffrent, update Product Inventory
+                            update prodInvUpd;
+                            ccrz.ccLog.log('ckz_POCOProdInvCtl', 'Updated: ' + QtyAvailable);
+                        }    
+                }   
             }
         }
         
         return null;
-    }
-    
+    } 
 }
